@@ -27,7 +27,7 @@ alwaysApply: false
     $env:VITE_API_BASE_URL='http://localhost:8000'; npm run dev -- --host 0.0.0.0 --port 5173 --strictPort
     ```
     La variable dura lo que la sesión de la terminal.
-- **URLs en el código:** nunca escribir `http://localhost:...` fijo. Las llamadas usan `` `${API_BASE_URL}/api/...` `` con `const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? ""` (`App.tsx:13`).
+- **URLs en el código:** nunca escribir `http://localhost:...` fijo. Las llamadas usan `` `${API_BASE_URL}/api/...` `` con `const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? ""` (al inicio de `App.tsx`).
 - **Variables de entorno:** solo `VITE_API_BASE_URL`, documentada en `frontend/.env.example`. No commitear `.env` (lo ignora `.gitignore`).
 - **Puertos:** no inventarlos ni cambiar los mapeos de `docker-compose.yml` sin pedirlo. Antes de afirmar una URL, confirmarla en la salida del servicio o en `/health`.
 - **Dependencias:**

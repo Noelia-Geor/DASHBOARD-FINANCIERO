@@ -35,7 +35,7 @@ alwaysApply: false
   - Cargando: muestra `Skeleton` (`kpi-card.tsx:37-50`).
   - Vacío: muestra un mensaje explícito (`"No data available to display"` en los gráficos).
   - Error: `App.tsx` muestra el aviso. No eliminar ni ocultar estos estados.
-- **Datos:** la fuente es `GET /api/metrics` a través de `API_BASE_URL` (`App.tsx:13-16`).
+- **Datos:** la fuente es `GET /api/metrics` a través de `API_BASE_URL` (`fetchFinancialData` en `App.tsx`).
   - No importar `src/lib/mock-data.ts`: está sin uso y contiene fechas de 2024 que no coinciden con la API.
   - El periodo del encabezado se calcula con `formatPeriodLabel(movements)` a partir de los datos cargados. No volver a escribir un periodo fijo.
 - **Fechas `YYYY-MM-DD`:** para agrupar u ordenar, trabajar con el texto (`create_date.slice(0, 7)`, `.sort()`), como hace `formatPeriodLabel`.
