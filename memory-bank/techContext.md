@@ -44,7 +44,7 @@
 
 | Acción | Comando |
 |---|---|
-| Levantar todo | `docker compose up --build` (no verificado en este equipo: no hay Docker) |
+| Levantar todo | `docker compose up --build` ✅ (Codespaces; ver C5 en `verification.md` si el proxy da `ETIMEDOUT`) |
 | Backend sin Docker (desde `backend/`) | `python -m debugpy --listen 0.0.0.0:5678 -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload` ✅ |
 | Frontend sin Docker (desde `frontend/`, bash) | `npm ci` y `VITE_API_BASE_URL=http://localhost:8000 npm run dev -- --host 0.0.0.0 --port 5173 --strictPort` ✅ |
 | Frontend sin Docker (PowerShell) | `$env:VITE_API_BASE_URL='http://localhost:8000'; npm run dev -- --host 0.0.0.0 --port 5173 --strictPort` |

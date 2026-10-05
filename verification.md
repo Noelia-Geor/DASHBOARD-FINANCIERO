@@ -4,7 +4,8 @@ Rastro de verificación del repositorio heredado. Cada afirmación se contrastó
 
 - **Fecha:** 2026-10-05
 - **Entorno:** Windows 11, Node 24.14.0, Python 3.13.14 (venv fuera del repo).
-- **Limitación:** Docker no está instalado en esta máquina, así que `docker compose up --build` no se pudo ejecutar aquí. Los servicios se levantaron con los mismos comandos que definen los Dockerfiles.
+- **Limitación inicial:** Docker no está instalado en esta máquina, así que aquí los servicios se levantaron con los mismos comandos que definen los Dockerfiles.
+- **Después:** `docker compose up --build` se verificó en un GitHub Codespace (sección 6).
 
 Marcas: ✅ verificado · ❌ incorrecto (con corrección) · ❓ sin verificar
 
@@ -81,7 +82,7 @@ Dashboard de métricas financieras con dos servicios:
 
 | # | Afirmación | Fuente | Estado |
 |---|---|---|---|
-| 1 | Se ejecuta con `docker compose up --build` | `README.md`, `docker-compose.yml` | ❓ no ejecutado: no hay Docker en esta máquina |
+| 1 | Se ejecuta con `docker compose up --build` | `README.md`, `docker-compose.yml` | ✅ en Codespaces: build OK, 2 contenedores en marcha, puertos 5173, 8000 y 5678 (sección 6) |
 | 2 | Frontend en `http://localhost:5173` | `docker-compose.yml:7`, `frontend/Dockerfile:12` | ✅ en ejecución nativa con `--strictPort` |
 | 3 | Backend en `http://localhost:8000`, docs en `/docs` | `docker-compose.yml:19`, `backend/Dockerfile:12` | ✅ HTTP 200 |
 | 4 | El backend expone también el puerto 5678 | `docker-compose.yml:20`, `backend/Dockerfile:10-12` | ✅ debugpy escuchando. El README no lo menciona |
@@ -95,7 +96,7 @@ Dashboard de métricas financieras con dos servicios:
 | 12 | `src/lib/mock-data.ts` alimenta el dashboard | — | ❌ No se importa en ningún archivo; los datos reales llegan por la API |
 | 13 | Hay tests de backend y frontend | `backend/tests/`, `frontend/src/lib/financial-utils.test.ts` | ✅ 15 + 5 pasan. Los READMEs no explican cómo ejecutarlos |
 | 14 | Los títulos de los READMEs coinciden | `README.md` ("Financial Metrics Dashboard"), `README.es.md` ("Panel de Métricas") | ❌ El título en español se cambió en el commit de prueba `1f38829` y ya no traduce al inglés |
-| 15 | `docker compose` funciona en Codespaces | `README.md` | ❓ no probado |
+| 15 | `docker compose` funciona en Codespaces "sin variables extra" | `README.md` | ❌ → ✅ con ajuste. Ver C5 (sección 6) |
 
 ## 4. Correcciones (afirmación incorrecta → corrección)
 
@@ -155,3 +156,44 @@ Dashboard de métricas financieras con dos servicios:
 | frontend `npm test` | 8 passed |
 | `npm run lint` | sin errores |
 | `npm run build` | OK |
+
+## 6. Verificación de `docker compose up --build` (GitHub Codespaces)
+
+**Entorno:** Codespace nuevo creado desde `main` en `9ab15f5`. Máquina `basicLinux32gb`, Docker 29.8.0, Compose v5.5.1. Fecha: 2026-10-05. El Codespace se borró al terminar.
+
+| Comprobación | Resultado |
+|---|---|
+| `docker compose up --build -d` | exit 0. Imágenes `frontend` y `backend` construidas; red `_default` creada |
+| `docker compose ps` | `backend` con 8000 y 5678 publicados; `frontend` con 5173 |
+| `GET localhost:8000/health` | `{"status":"ok"}` (200) |
+| `GET localhost:8000/docs` | 200, `text/html` |
+| `GET localhost:8000/api/metrics` | 360 movimientos, de `2025-10-02` a `2026-09-28` |
+| Puerto 5678 (debugpy) | abierto |
+| `VITE_API_BASE_URL` dentro del contenedor `frontend` | vacía, sin `.env` (se usa el proxy) |
+| `docker compose exec backend python -m pytest` | 18 passed (Python 3.13.16) |
+| `docker compose exec frontend npm test` / `npm run lint` | 8 passed / sin errores (Node 24.21.0) |
+| Proxy: `GET localhost:5173/api/metrics` | **primer intento: fallo**. Tras el ajuste C5: 200 y 360 movimientos |
+| Navegador (puerto 5173 reenviado con `gh codespace ports forward`) | dashboard con KPIs, gráficos y "Oct 2025 - Sep 2026". El navegador pide `/api/metrics` → 200 a través del proxy |
+
+### C5. Afirmación: "en Docker/Codespaces el proxy funciona sin configurar nada"
+
+**Observado:**
+- Vite registró `http proxy error: /api/metrics` → `connect ETIMEDOUT 172.18.0.2:8000`.
+
+**Diagnóstico:**
+- No es un fallo del repo:
+  - `backend` resuelve bien desde `frontend` (`172.18.0.2`);
+  - el backend responde en su propia IP de red;
+  - un contenedor neutro (`busybox`) en la misma red **tampoco** llega a `backend:8000` ni a `frontend:5173`.
+- La causa está en el host del Codespace:
+  - la tabla `iptables-legacy` tiene `FORWARD DROP` y solo acepta tráfico de `docker0`;
+  - con `bridge-nf-call-iptables=1`, ese `DROP` descarta el tráfico entre contenedores de la red de Compose.
+
+**Corrección:**
+- En el diseño del repo, el proxy sí funciona dentro de Docker: con la regla temporal `sudo iptables-legacy -I DOCKER-USER -j ACCEPT`, la petición pasó por el proxy (200) y el dashboard cargó los datos.
+- En un Codespace con esa configuración de red hace falta ese ajuste.
+- La regla se retiró (`-D`) y el Codespace se borró después.
+
+**Alcance:**
+- Observado en un Codespace concreto. No se ha comprobado si ocurre en todos.
+- `runtime-and-config.md` recoge el síntoma y cómo diagnosticarlo.

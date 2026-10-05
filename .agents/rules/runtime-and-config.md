@@ -17,7 +17,11 @@ alwaysApply: false
 
 ## Guía específica del proyecto
 
-- **Método soportado:** `docker compose up --build` desde la raíz.
+- **Método soportado:** `docker compose up --build` desde la raíz. Verificado en Codespaces (`verification.md` §6).
+- **Si el proxy falla dentro de Docker** (Vite registra `connect ETIMEDOUT <ip>:8000`, pero `curl localhost:8000/health` funciona desde el host):
+  - Primero hay que distinguir entorno de repo. Lanza un contenedor neutro en la red de Compose: `docker run --rm --network <proyecto>_default busybox wget -T 5 -qO- http://backend:8000/health`.
+  - Si también falla, es la red del host, no el código: en el Codespace probado, `iptables-legacy` tenía `FORWARD DROP`.
+  - No cambies `vite.config.ts` ni `docker-compose.yml` para esquivarlo. Informa del problema; el ajuste de cortafuegos lo decide quien es dueño del entorno.
   - Frontend → `5173`, backend → `8000`, docs → `http://localhost:8000/docs`, debugpy → `5678` (`docker-compose.yml`).
 - **Sin Docker:** backend con el CMD de `backend/Dockerfile`; frontend con `VITE_API_BASE_URL=http://localhost:8000 npm run dev -- --host 0.0.0.0 --port 5173 --strictPort`.
   - Sin la variable, `/api` falla.
