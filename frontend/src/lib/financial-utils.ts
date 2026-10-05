@@ -66,6 +66,19 @@ export function computeMonthlyData(
     });
 }
 
+export function formatPeriodLabel(movements: FinancialMovement[]): string {
+  if (movements.length === 0) {
+    return "No data";
+  }
+
+  // ISO `YYYY-MM-DD` strings sort chronologically, so no Date parsing is needed.
+  const dates = movements.map((m) => m.create_date).sort();
+  const firstLabel = formatMonthYearLabel(dates[0].slice(0, 7));
+  const lastLabel = formatMonthYearLabel(dates[dates.length - 1].slice(0, 7));
+
+  return firstLabel === lastLabel ? firstLabel : `${firstLabel} - ${lastLabel}`;
+}
+
 export function formatCurrency(value: number): string {
   return new Intl.NumberFormat("en-US", {
     style: "currency",

@@ -1,10 +1,12 @@
 import { LayoutDashboard } from 'lucide-react'
+import { Skeleton } from '@/components/ui/skeleton'
 
 interface DashboardHeaderProps {
-  period?: string
+  period?: string | null
+  loading?: boolean
 }
 
-export function DashboardHeader({ period = '2024 — Full Year' }: DashboardHeaderProps) {
+export function DashboardHeader({ period, loading }: DashboardHeaderProps) {
   return (
     <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
       <div className="flex items-center gap-3">
@@ -17,9 +19,13 @@ export function DashboardHeader({ period = '2024 — Full Year' }: DashboardHead
         </div>
       </div>
       <div className="flex items-center gap-2">
-        <span className="inline-flex items-center rounded-full border border-border bg-secondary px-3 py-1 text-xs font-medium text-secondary-foreground">
-          {period}
-        </span>
+        {loading ? (
+          <Skeleton className="h-6 w-36 rounded-full" />
+        ) : period ? (
+          <span className="inline-flex items-center rounded-full border border-border bg-secondary px-3 py-1 text-xs font-medium text-secondary-foreground">
+            {period}
+          </span>
+        ) : null}
       </div>
     </header>
   )

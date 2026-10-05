@@ -113,3 +113,45 @@ Dashboard de métricas financieras con dos servicios:
 - **C4. Origen de los datos.** "El dashboard lee `mock-data.ts`."
   - Falso: `grep` no encuentra ninguna importación de `mock-data`.
   - **Corrección:** los datos vienen de `GET /api/metrics`.
+
+## 5. Validación de las reglas de `.agents/rules` (Fase 3)
+
+**Método:**
+- Cada prueba la hizo un agente nuevo, sin contexto previo, al que solo se le indicó "lee `AGENTS.md`" y una tarea pequeña real, sin mencionar las convenciones.
+- Se revisó el diff de cada agente, se ejecutaron las suites y se iteraron las reglas con los huecos detectados.
+
+### Ronda 1
+
+| Tarea real | Reglas ejercitadas | Qué hizo el agente guiado por las reglas | Resultado |
+|---|---|---|---|
+| T1. La etiqueta de periodo muestra "2024" pero los datos son de otros meses | `frontend-structure`, `testing`, `api-contract` | Consultó `/api/metrics` antes de programar. Creó la función pura `formatPeriodLabel` en `financial-utils.ts` con 3 tests. Añadió `loading` + `Skeleton` al header. Respetó el estilo de cada archivo. Texto en inglés. No usó `mock-data.ts` | ✅ vitest 8/8, lint y build OK. En el navegador: "Oct 2025 - Sep 2026" |
+| T2. Cubrir con tests el rechazo de `limit` fuera de rango en `/categories/top` | `backend-api`, `testing` | 3 tests en `test_routes.py` con el `client` existente. Comprobó el 422 de FastAPI sin tocar el endpoint, sin fechas fijas, y ejecutó pytest desde `backend/` | ✅ pytest 18/18 |
+| T3. Documentar cómo ejecutar pruebas y arrancar sin Docker | `docs-and-git`, `runtime-and-config`, `testing` | Cambió `README.md` y `README.es.md` en paralelo. Documentó solo lo comprobado con `curl`/`netstat`. Añadió el puerto 5678. Corrigió la frase falsa del proxy | ✅ |
+| T4. Plan (sin cambios) para añadir una descripción a cada movimiento | `api-contract`, `backend-api` | Cambio en los dos lados en `snake_case`, tests nuevos en `test_routes.py`. Detectó que una llamada extra a `random` alteraría la semilla 42 | ✅ plan correcto |
+
+**Huecos detectados → corrección aplicada a las reglas:**
+- `testing.md` fijaba recuentos de tests (15/5), desfasados tras T2 → se eliminan los recuentos.
+- `test_metrics_comparison_returns_delta_fields` usa fechas fijas, contra la regla → se documenta como excepción heredada que no se debe copiar.
+- Los objetos escritos a mano (`financial-utils.test.ts`, y `mock-data.ts`, que también compila `tsc -b`) rompen el build si cambia el contrato (T4) → `api-contract.md` los enumera y prohíbe borrarlos o hacer el campo opcional solo en TS para esquivar el error.
+- Un campo derivado no debe llamar a `random` (T4) → regla añadida en `backend-api.md` y `api-contract.md`.
+- La sintaxis `VAR=valor cmd` no funciona en PowerShell (T3) → variante PowerShell en `runtime-and-config.md` y regla de "comandos multiplataforma" en `docs-and-git.md`.
+- `.agents/skills/` no existe y las reglas no lo decían (T1–T4) → `docs-and-git.md` lo aclara.
+- "Commitear" contra "la tarea dice no commitear" (T1, T3) → `docs-and-git.md`: manda la instrucción de la tarea.
+- Fechas ISO con `new Date()` + `getMonth()` (riesgo de zona horaria señalado en T1) → `frontend-structure.md` pide trabajar con el texto en código nuevo.
+
+### Ronda 2 (reglas iteradas)
+
+| Tarea real | Qué hizo el agente | Resultado |
+|---|---|---|
+| T5. "Una compañera en Windows/PowerShell no consigue arrancar el frontend sin Docker" | Aplicó la nueva regla multiplataforma: bloques bash y PowerShell en los dos READMEs, con el comando literal de `runtime-and-config.md`. Reprodujo el error en PowerShell y verificó que la variable llega a Vite (`loadEnv`) | ✅ |
+
+**Hueco residual detectado en la ronda 2:** el comentario de `frontend/.env.example` repetía "el proxy ya reenvía /api en desarrollo local". Se corrige en esta fase, igual que C1.
+
+### Estado tras la Fase 3
+
+| Comprobación | Resultado |
+|---|---|
+| backend `python -m pytest` | 18 passed |
+| frontend `npm test` | 8 passed |
+| `npm run lint` | sin errores |
+| `npm run build` | OK |

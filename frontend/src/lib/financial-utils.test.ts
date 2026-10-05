@@ -5,6 +5,7 @@ import {
   computeMonthlyData,
   formatCurrency,
   formatPercent,
+  formatPeriodLabel,
 } from "./financial-utils";
 import type { FinancialMovement } from "./financial-types";
 
@@ -100,6 +101,28 @@ describe("computeMonthlyData", () => {
       outcome: 0,
       profitPercent: 100,
     });
+  });
+});
+
+describe("formatPeriodLabel", () => {
+  it("returns the first and last month of the loaded data", () => {
+    const unsortedCrossYearMovements: FinancialMovement[] = [
+      { ...sampleMovements[0], create_date: "2026-09-28" },
+      { ...sampleMovements[1], create_date: "2025-10-02" },
+      { ...sampleMovements[2], create_date: "2026-03-15" },
+    ];
+
+    expect(formatPeriodLabel(unsortedCrossYearMovements)).toBe(
+      "Oct 2025 - Sep 2026",
+    );
+  });
+
+  it("returns a single month when all data falls in the same month", () => {
+    expect(formatPeriodLabel(sampleMovements.slice(0, 2))).toBe("Jan 2024");
+  });
+
+  it("returns an explicit label when there is no data", () => {
+    expect(formatPeriodLabel([])).toBe("No data");
   });
 });
 
