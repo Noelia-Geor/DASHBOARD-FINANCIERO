@@ -47,6 +47,7 @@
 | **Campo `baseline_average`** — number, obligatorio | openapi.json + respuesta real: `51174.1`, `56456.19`, etc. | ✅ |
 | **Campo `increase_ratio`** — number, obligatorio | openapi.json + respuesta real: `1.0201`, `0.5601`, etc. | ✅ |
 | **Umbral `0.3` devuelve 4 alertas** | Respuesta real con `threshold=0.3` → 4 items | ✅ |
+| **Períodos iniciales sin 3 períodos previos no generan alerta** | No probado. El frontend no necesita tratarlo porque si no hay alerta no aparece en la respuesta, pero la hipótesis no está verificada contra la API real. | ❓ |
 
 ### GET /api/metrics/categories/top?operation_type=income&limit=5
 
@@ -85,3 +86,17 @@
 | D5 — Total del grupo para porcentajes (Func. 3) | Opción C: se pide `GET /api/metrics/categories/top?operation_type=income&limit=20&business_type=<grupo>` y se suman todos los `total_amount` devueltos para obtener el total del grupo. La tabla muestra solo las 5 primeras categorías con su porcentaje sobre esa suma. | PM — confirmar que "total del grupo" = todos los ingresos del grupo (limit=20 captura todos). |
 | D6 — Threshold fuera de 0.01–1.0 | Opción A: el input numérico se limita al rango `0.01`–`1.0`, paso `0.01`, defecto `0.3`. Si el usuario escribe fuera del rango no se envía la petición. | yo |
 | D7 — Rango de fechas compartido entre páginas | Opción A: el filtro de fechas es independiente en cada página, pero ambas usan el mismo componente de filtro reutilizable. | yo |
+| D8 — Datos por props | `DashboardPage` (dashboard) y `ComparativePage` (B2B vs B2C) hacen las llamadas a la API y pasan los datos por props; los componentes solo pintan. `App.tsx` solo alterna entre páginas según la pestaña activa (D16). | yo |
+| D9 — Navegación | Botón/pestaña en el header que cambia entre "Dashboard" y "B2B vs B2C". Sin añadir librerías de rutas. | yo |
+| D10 — Cuándo se llama | Al abrir cada página, sin fechas y threshold 0.3. Las fechas recargan todo lo de esa página al cambiar, solo si son válidas. El threshold recarga la tabla al salir del input (onBlur), solo si es válido. | yo |
+| D11 — Formato | Reusar `formatCurrency` (USD, sin decimales) y `formatPercent` (1 decimal) de `src/lib/financial-utils.ts`. Fechas tal cual YYYY-MM-DD. Gráficos con Recharts (ya instalado). | yo |
+| D12 — Posición | `DateRangePicker` debajo del header y encima de los KPIs; `AlertsTable` a ancho completo debajo de los gráficos. Rango disponible mostrado como "Available data: min_date – max_date". | yo |
+| D13 — limit=20 cubre siempre todas las categorías | La API solo admite 5 categorías (enum verificado). D5 sigue pendiente del PM, pero se construye así por defecto. | yo |
+| D14 — AlertsTable sin paginación | Muestra todas las filas ordenadas por período, sin paginación. | yo |
+| D15 — Uso de facets.categories | `facets.categories` se usa como lista de etiquetas de categorías válidas (validación). Los importes y el desglose B2B/B2C se obtienen de `categories/top`, porque `facets` no dispone de importes ni desglose por línea de negocio. Sustituye a la restricción anterior de D14. | PM |
+| D16 — Estructura de páginas | Se crean `DashboardPage` (KPIs, gráficos, `DateRangePicker`, `AlertsTable`) y `ComparativePage` (`ComparativeView`). `App.tsx` solo muestra una página u otra según la pestaña activa. | yo |
+| D17 — Idioma y locale | Textos de pantalla en inglés, formato `en-US` con punto decimal, según convenciones del repo (R7). Los mensajes de UI siguen el idioma del código existente. | yo |
+| D18 — Disparo del filtro de fechas | No hay botón "Aplicar": `onRangeChange` se dispara automáticamente al cambiar una fecha, solo si el rango es válido. | yo |
+| D19 — Threshold inválido en onBlur | Si el threshold es inválido tras onBlur, el valor se queda visible con el aviso inline y la tabla mantiene los últimos datos válidos. El input es de tipo `number`. | yo |
+| D20 — Comportamiento de navegación y layout | El periodo del `DashboardHeader` se actualiza para reflejar el rango filtrado. `AlertsTable` a ancho completo debajo del grid de gráficos. Al cambiar de pestaña, las fechas de cada página se reinician. Los `helperText` de los KPIs no cambian. | yo |
+| D21 — Tests | Los tests quedan fuera de esta spec; se siguen las reglas de `.agents/rules/testing.md`. | yo |
