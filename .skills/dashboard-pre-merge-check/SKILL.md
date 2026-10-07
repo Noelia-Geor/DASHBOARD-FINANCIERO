@@ -9,14 +9,14 @@ description: Revisa una rama de este dashboard financiero antes de abrir un PR o
 
 ## Entradas
 
-- **Obligatoria:** una rama con commits por delante de `main` (`git log main..HEAD`). Si no hay ninguno, dilo y para.
+- **Obligatoria:** una rama con commits por delante de `main` (`git log origin/main..HEAD`). Si no hay ninguno, dilo y para.
 - **Opcional:** la descripción del PR, para compararla con los cambios reales.
 
 ## Pasos
 
 Si una comprobación no aplica (por ejemplo, no cambió nada en `backend/`), se marca **✅ n/a** con el motivo. Cada paso del 2 al 7 es una fila del informe.
 
-1. Ejecuta `git diff --name-only main...HEAD` y agrupa los archivos en: `backend/`, `frontend/`, documentación (`README*.md`, `AGENTS.md`, `memory-bank/`, `.agents/rules/`, `.skills/`), skills instaladas (`.agents/skills/`, `skills-lock.json`) y otros.
+1. Ejecuta `git fetch origin` y después `git diff --name-only origin/main...HEAD` y agrupa los archivos en: `backend/`, `frontend/`, documentación (`README*.md`, `AGENTS.md`, `memory-bank/`, `.agents/rules/`, `.skills/`), skills instaladas (`.agents/skills/`, `skills-lock.json`) y otros.
    - Skills instaladas: cada carpeta de `.agents/skills/` debe estar en `skills-lock.json`, y al revés. Son textos de terceros: no revises su contenido aquí.
    - Otros: lístalos en el informe; no hacen fallar la revisión.
 2. **Si cambió el frontend** → desde `frontend/` ejecuta `npm run lint`, `npm test -- --run` y `npm run build`.
@@ -26,7 +26,7 @@ Si una comprobación no aplica (por ejemplo, no cambió nada en `backend/`), se 
 4. **Contrato de la API** → si en `backend/app/routes.py` cambió un modelo de Pydantic, comprueba que `frontend/src/lib/financial-types.ts` cambió en la misma rama con los mismos nombres de campos y valores. El contrato está copiado a mano y nada más detecta si se desincroniza.
 5. **Fechas** → si los cambios añaden código (no comentarios) que llama a `new Date(` con un `create_date` en `frontend/src/`, falla: hay que leer el texto ISO (`create_date.slice(0, 7)`). Ver el test de zona horaria en `financial-utils.test.ts`.
 6. **Documentación** → si cambió un comando, puerto o variable de entorno (scripts de `package.json`, `vite.config.ts`, `docker-compose.yml`, Dockerfiles, `.env.example`), comprueba que `README.md` y `README.es.md` cambiaron juntos y que `memory-bank/progress.md` lo refleja.
-7. **Commits** → cada commit de `main..HEAD` debe seguir `tipo(ámbito): descripción` o `tipo: descripción`, con un tipo de: `feat`, `fix`, `docs`, `test`, `chore`, `perf`.
+7. **Commits** → cada commit de `origin/main..HEAD` debe seguir `tipo(ámbito): descripción` o `tipo: descripción`, con un tipo de: `feat`, `fix`, `docs`, `test`, `chore`, `perf`.
 8. Si te dieron la descripción del PR, añade una fila comparándola con los cambios reales. Si no, no pongas esa fila.
 9. Escribe el informe.
 
