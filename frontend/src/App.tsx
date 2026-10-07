@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState, lazy, Suspense } from "react";
 import { DashboardHeader } from "@/components/dashboard/dashboard-header";
 import { KPIRow } from "@/components/dashboard/kpi-row";
-import { IncomeOutcomeChart } from "@/components/dashboard/income-outcome-chart";
-import { ProfitPercentChart } from "@/components/dashboard/profit-percent-chart";
+import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   type FinancialMovement,
   type KPIMetrics,
@@ -24,19 +24,40 @@ async function fetchFinancialData(): Promise<FinancialMovement[]> {
   return response.json();
 }
 
+const LazyIncomeOutcomeChart = lazy(() =>
+  import("@/components/dashboard/income-outcome-chart").then((mod) => ({
+    default: mod.IncomeOutcomeChart,
+  })),
+);
+
+const LazyProfitPercentChart = lazy(() =>
+  import("@/components/dashboard/profit-percent-chart").then((mod) => ({
+    default: mod.ProfitPercentChart,
+  })),
+);
+
 function App() {
-  const [metrics, setMetrics] = useState<KPIMetrics | null>(null);
-  const [monthlyData, setMonthlyData] = useState<MonthlyDataPoint[]>([]);
-  const [period, setPeriod] = useState<string | null>(null);
+  const [movements, setMovements] = useState<FinancialMovement[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const metrics = useMemo<KPIMetrics | null>(
+    () => (movements ? computeKPIs(movements) : null),
+    [movements],
+  );
+  const monthlyData = useMemo<MonthlyDataPoint[]>(
+    () => (movements ? computeMonthlyData(movements) : []),
+    [movements],
+  );
+  const period = useMemo<string | null>(
+    () => (movements ? formatPeriodLabel(movements) : null),
+    [movements],
+  );
+
   useEffect(() => {
     fetchFinancialData()
-      .then((movements) => {
-        setMetrics(computeKPIs(movements));
-        setMonthlyData(computeMonthlyData(movements));
-        setPeriod(formatPeriodLabel(movements));
+      .then((data) => {
+        setMovements(data);
       })
       .catch(() => {
         setError(
@@ -47,6 +68,14 @@ function App() {
         setLoading(false);
       });
   }, []);
+
+  const chartFallback = (
+    <Card className="border-border/60">
+      <CardContent className="flex h-[280px] items-center justify-center p-0">
+        <Skeleton className="h-full w-full rounded-lg" />
+      </CardContent>
+    </Card>
+  );
 
   return (
     <main className="dark min-h-screen bg-background text-foreground">
@@ -70,8 +99,12 @@ function App() {
             className="grid grid-cols-1 gap-4 xl:grid-cols-2"
           >
             <h2 className="sr-only">Financial charts</h2>
-            <IncomeOutcomeChart data={monthlyData} loading={loading} />
-            <ProfitPercentChart data={monthlyData} loading={loading} />
+            <Suspense fallback={chartFallback}>
+              <LazyIncomeOutcomeChart data={monthlyData} loading={loading} />
+            </Suspense>
+            <Suspense fallback={chartFallback}>
+              <LazyProfitPercentChart data={monthlyData} loading={loading} />
+            </Suspense>
           </section>
         </div>
       </div>
