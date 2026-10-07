@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState, lazy, Suspense } from "react";
 import { DashboardHeader } from "@/components/dashboard/dashboard-header";
 import { KPIRow } from "@/components/dashboard/kpi-row";
-import { IncomeOutcomeChart } from "@/components/dashboard/income-outcome-chart";
-import { ProfitPercentChart } from "@/components/dashboard/profit-percent-chart";
+import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   type FinancialMovement,
   type KPIMetrics,
@@ -24,29 +24,58 @@ async function fetchFinancialData(): Promise<FinancialMovement[]> {
   return response.json();
 }
 
+const LazyIncomeOutcomeChart = lazy(() =>
+  import("@/components/dashboard/income-outcome-chart").then((mod) => ({
+    default: mod.IncomeOutcomeChart,
+  })),
+);
+
+const LazyProfitPercentChart = lazy(() =>
+  import("@/components/dashboard/profit-percent-chart").then((mod) => ({
+    default: mod.ProfitPercentChart,
+  })),
+);
+
 function App() {
-  const [metrics, setMetrics] = useState<KPIMetrics | null>(null);
-  const [monthlyData, setMonthlyData] = useState<MonthlyDataPoint[]>([]);
-  const [period, setPeriod] = useState<string | null>(null);
+  const [movements, setMovements] = useState<FinancialMovement[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const metrics = useMemo<KPIMetrics | null>(
+    () => (movements ? computeKPIs(movements) : null),
+    [movements],
+  );
+  const monthlyData = useMemo<MonthlyDataPoint[]>(
+    () => (movements ? computeMonthlyData(movements) : []),
+    [movements],
+  );
+  const period = useMemo<string | null>(
+    () => (movements ? formatPeriodLabel(movements) : null),
+    [movements],
+  );
+
   useEffect(() => {
     fetchFinancialData()
-      .then((movements) => {
-        setMetrics(computeKPIs(movements));
-        setMonthlyData(computeMonthlyData(movements));
-        setPeriod(formatPeriodLabel(movements));
+      .then((data) => {
+        setMovements(data);
       })
       .catch(() => {
         setError(
-          "No se pudo cargar la informacion financiera. Revisa la API de backend.",
+          "Could not load financial data. Check that the backend API is running.",
         );
       })
       .finally(() => {
         setLoading(false);
       });
   }, []);
+
+  const chartFallback = (
+    <Card className="border-border/60">
+      <CardContent className="flex h-[280px] items-center justify-center p-0">
+        <Skeleton className="h-full w-full rounded-lg" />
+      </CardContent>
+    </Card>
+  );
 
   return (
     <main className="dark min-h-screen bg-background text-foreground">
@@ -55,12 +84,13 @@ function App() {
           <DashboardHeader period={period} loading={loading} />
 
           {error ? (
-            <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive-foreground">
+            <div role="alert" className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive-foreground">
               {error}
             </div>
           ) : null}
 
           <section aria-label="Key performance indicators">
+            <h2 className="sr-only">Key performance indicators</h2>
             <KPIRow metrics={metrics} loading={loading} />
           </section>
 
@@ -68,8 +98,13 @@ function App() {
             aria-label="Financial charts"
             className="grid grid-cols-1 gap-4 xl:grid-cols-2"
           >
-            <IncomeOutcomeChart data={monthlyData} loading={loading} />
-            <ProfitPercentChart data={monthlyData} loading={loading} />
+            <h2 className="sr-only">Financial charts</h2>
+            <Suspense fallback={chartFallback}>
+              <LazyIncomeOutcomeChart data={monthlyData} loading={loading} />
+            </Suspense>
+            <Suspense fallback={chartFallback}>
+              <LazyProfitPercentChart data={monthlyData} loading={loading} />
+            </Suspense>
           </section>
         </div>
       </div>

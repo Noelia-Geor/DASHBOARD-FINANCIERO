@@ -6,7 +6,12 @@ Agents working on this project **must**:
   `./.agents/rules`
 
 - Look for available **agent skills** in the directory:  
-  `./.agents/skills`
+  `./.agents/skills`  
+  _(skills de terceros instaladas)_
+
+- Look for **internal project skills** in the directory:  
+  `./.skills`  
+  _(skills propias del proyecto)_
 
 - Look for the **project memory bank** in:  
   `./memory-bank`  
