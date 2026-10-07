@@ -40,7 +40,7 @@ function App() {
       })
       .catch(() => {
         setError(
-          "No se pudo cargar la informacion financiera. Revisa la API de backend.",
+          "Could not load financial data. Check that the backend API is running.",
         );
       })
       .finally(() => {
@@ -55,12 +55,13 @@ function App() {
           <DashboardHeader period={period} loading={loading} />
 
           {error ? (
-            <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive-foreground">
+            <div role="alert" className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive-foreground">
               {error}
             </div>
           ) : null}
 
           <section aria-label="Key performance indicators">
+            <h2 className="sr-only">Key performance indicators</h2>
             <KPIRow metrics={metrics} loading={loading} />
           </section>
 
@@ -68,6 +69,7 @@ function App() {
             aria-label="Financial charts"
             className="grid grid-cols-1 gap-4 xl:grid-cols-2"
           >
+            <h2 className="sr-only">Financial charts</h2>
             <IncomeOutcomeChart data={monthlyData} loading={loading} />
             <ProfitPercentChart data={monthlyData} loading={loading} />
           </section>
