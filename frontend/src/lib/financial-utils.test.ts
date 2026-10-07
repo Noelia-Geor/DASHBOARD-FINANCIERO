@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import {
   computeKPIs,
@@ -62,6 +62,30 @@ describe("computeKPIs", () => {
 });
 
 describe("computeMonthlyData", () => {
+  it("groups dates by UTC year-month even in negative UTC offset timezone", () => {
+    vi.stubEnv("TZ", "America/New_York");
+
+    const monthlyData = computeMonthlyData([
+      {
+        create_date: "2024-02-01",
+        amount: 500,
+        operation_type: "income",
+        category: "sales",
+        business_type: "B2B",
+      },
+    ]);
+
+    vi.unstubAllEnvs();
+
+    expect(monthlyData).toHaveLength(1);
+    expect(monthlyData[0]).toEqual({
+      month: "Feb 2024",
+      income: 500,
+      outcome: 0,
+      profitPercent: 100,
+    });
+  });
+
   it("returns chronological year-month points with aggregated totals", () => {
     const unsortedCrossYearMovements: FinancialMovement[] = [
       {
