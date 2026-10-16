@@ -1,6 +1,7 @@
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardDescription } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { type MonthlyDataPoint } from '@/lib/financial-types'
+import { prefersReducedMotion } from '@/lib/motion'
 import {
   LineChart,
   Line,
@@ -67,7 +68,7 @@ export function ProfitPercentChart({ data, loading }: ProfitPercentChartProps) {
   return (
     <Card className="border-border/60">
       <CardHeader className="pb-4">
-        <CardTitle className="text-base font-semibold">Profit Margin %</CardTitle>
+        <h3 className="text-base font-semibold">Profit Margin %</h3>
         <CardDescription>Monthly profit as a percentage of total income</CardDescription>
       </CardHeader>
       <CardContent>
@@ -76,36 +77,64 @@ export function ProfitPercentChart({ data, loading }: ProfitPercentChartProps) {
             No data available to display
           </div>
         ) : (
-          <ResponsiveContainer width="100%" height={280}>
-            <LineChart data={data} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" strokeOpacity={0.6} />
-              <XAxis
-                dataKey="month"
-                tick={{ fontSize: 12, fill: 'var(--color-muted-foreground)' }}
-                axisLine={false}
-                tickLine={false}
-              />
-              <YAxis
-                tick={{ fontSize: 11, fill: 'var(--color-muted-foreground)' }}
-                axisLine={false}
-                tickLine={false}
-                tickFormatter={(v) => `${v.toFixed(0)}%`}
-                width={40}
-                domain={['auto', 'auto']}
-              />
-              <ReferenceLine y={0} stroke="var(--color-border)" strokeDasharray="4 4" />
-              <Tooltip content={<CustomTooltip />} />
-              <Line
-                type="monotone"
-                dataKey="profitPercent"
-                name="profitPercent"
-                stroke="var(--chart-profit)"
-                strokeWidth={2}
-                dot={{ r: 3, fill: 'var(--chart-profit)', strokeWidth: 0 }}
-                activeDot={{ r: 5, strokeWidth: 0 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
+          <div>
+            <ResponsiveContainer width="100%" height={280}>
+              <LineChart
+                data={data}
+                margin={{ top: 4, right: 8, left: 0, bottom: 0 }}
+                title="Profit Margin %"
+                desc="Line chart showing the monthly profit margin percentage over time"
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" strokeOpacity={0.6} />
+                <XAxis
+                  dataKey="month"
+                  tick={{ fontSize: 12, fill: 'var(--color-muted-foreground)' }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis
+                  tick={{ fontSize: 11, fill: 'var(--color-muted-foreground)' }}
+                  axisLine={false}
+                  tickLine={false}
+                  tickFormatter={(v) => `${v.toFixed(0)}%`}
+                  width={40}
+                  domain={['auto', 'auto']}
+                />
+                <ReferenceLine y={0} stroke="var(--color-border)" strokeDasharray="4 4" />
+                <Tooltip content={<CustomTooltip />} />
+                <Line
+                  type="monotone"
+                  dataKey="profitPercent"
+                  name="profitPercent"
+                  stroke="var(--chart-profit)"
+                  strokeWidth={2}
+                  dot={{ r: 3, fill: 'var(--chart-profit)', strokeWidth: 0 }}
+                  activeDot={{ r: 5, strokeWidth: 0 }}
+                  isAnimationActive={!prefersReducedMotion}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+            <div className="sr-only">
+              <h4>Monthly data</h4>
+              <table>
+                <caption>Profit margin percentage per month</caption>
+                <thead>
+                  <tr>
+                    <th>Month</th>
+                    <th>Profit margin (%)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.map((row) => (
+                    <tr key={row.month}>
+                      <td>{row.month}</td>
+                      <td>{row.profitPercent.toFixed(1)}%</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
         )}
       </CardContent>
     </Card>

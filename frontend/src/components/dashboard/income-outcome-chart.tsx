@@ -1,7 +1,8 @@
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardDescription } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { type MonthlyDataPoint } from '@/lib/financial-types'
 import { formatCurrency } from '@/lib/financial-utils'
+import { prefersReducedMotion } from '@/lib/motion'
 import {
   LineChart,
   Line,
@@ -66,7 +67,7 @@ export function IncomeOutcomeChart({ data, loading }: IncomeOutcomeChartProps) {
   return (
     <Card className="border-border/60">
       <CardHeader className="pb-4">
-        <CardTitle className="text-base font-semibold">Income vs. Outcome</CardTitle>
+        <h3 className="text-base font-semibold">Income vs. Outcome</h3>
         <CardDescription>Monthly revenue and expenditure evolution</CardDescription>
       </CardHeader>
       <CardContent>
@@ -75,48 +76,79 @@ export function IncomeOutcomeChart({ data, loading }: IncomeOutcomeChartProps) {
             No data available to display
           </div>
         ) : (
-          <ResponsiveContainer width="100%" height={280}>
-            <LineChart data={data} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" strokeOpacity={0.6} />
-              <XAxis
-                dataKey="month"
-                tick={{ fontSize: 12, fill: 'var(--color-muted-foreground)' }}
-                axisLine={false}
-                tickLine={false}
-              />
-              <YAxis
-                tick={{ fontSize: 11, fill: 'var(--color-muted-foreground)' }}
-                axisLine={false}
-                tickLine={false}
-                tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`}
-                width={48}
-              />
-              <Tooltip content={<CustomTooltip />} />
-              <Legend
-                formatter={(value) => (
-                  <span className="text-xs text-muted-foreground capitalize">{value}</span>
-                )}
-              />
-              <Line
-                type="monotone"
-                dataKey="income"
-                name="income"
-                stroke="var(--chart-income)"
-                strokeWidth={2}
-                dot={{ r: 3, fill: 'var(--chart-income)', strokeWidth: 0 }}
-                activeDot={{ r: 5, strokeWidth: 0 }}
-              />
-              <Line
-                type="monotone"
-                dataKey="outcome"
-                name="outcome"
-                stroke="var(--chart-outcome)"
-                strokeWidth={2}
-                dot={{ r: 3, fill: 'var(--chart-outcome)', strokeWidth: 0 }}
-                activeDot={{ r: 5, strokeWidth: 0 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
+          <div>
+            <ResponsiveContainer width="100%" height={280}>
+              <LineChart
+                data={data}
+                margin={{ top: 4, right: 8, left: 0, bottom: 0 }}
+                title="Income vs. Outcome"
+                desc="Line chart showing monthly income and outcome values over time"
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" strokeOpacity={0.6} />
+                <XAxis
+                  dataKey="month"
+                  tick={{ fontSize: 12, fill: 'var(--color-muted-foreground)' }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis
+                  tick={{ fontSize: 11, fill: 'var(--color-muted-foreground)' }}
+                  axisLine={false}
+                  tickLine={false}
+                  tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`}
+                  width={48}
+                />
+                <Tooltip content={<CustomTooltip />} />
+                <Legend
+                  formatter={(value) => (
+                    <span className="text-xs text-muted-foreground capitalize">{value}</span>
+                  )}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="income"
+                  name="income"
+                  stroke="var(--chart-income)"
+                  strokeWidth={2}
+                  dot={{ r: 3, fill: 'var(--chart-income)', strokeWidth: 0 }}
+                  activeDot={{ r: 5, strokeWidth: 0 }}
+                  isAnimationActive={!prefersReducedMotion}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="outcome"
+                  name="outcome"
+                  stroke="var(--chart-outcome)"
+                  strokeWidth={2}
+                  dot={{ r: 3, fill: 'var(--chart-outcome)', strokeWidth: 0 }}
+                  activeDot={{ r: 5, strokeWidth: 0 }}
+                  isAnimationActive={!prefersReducedMotion}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+            <div className="sr-only">
+              <h4>Monthly data</h4>
+              <table>
+                <caption>Income and outcome per month</caption>
+                <thead>
+                  <tr>
+                    <th>Month</th>
+                    <th>Income</th>
+                    <th>Outcome</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.map((row) => (
+                    <tr key={row.month}>
+                      <td>{row.month}</td>
+                      <td>{formatCurrency(row.income)}</td>
+                      <td>{formatCurrency(row.outcome)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
         )}
       </CardContent>
     </Card>
